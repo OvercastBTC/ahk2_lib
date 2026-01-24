@@ -7,6 +7,10 @@
  * @see {@link https://www.nuget.org/packages/Microsoft.Web.WebView2/ nuget package}
  * @see {@link https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/ API Reference}
  ***********************************************************************/
+#Requires AutoHotkey v2+
+#Include <System/WebView2/ComVar>
+#Include <Promise>
+
 class WebView2 {
 	static create(hwnd := -3, callback?, createdEnvironment := 0, dataDir := '', edgeRuntime := '', options := 0, dllPathOrFuncPtr := 'WebView2Loader.dll') {
 		p := createdEnvironment ? createdEnvironment.CreateCoreWebView2ControllerAsync(hwnd) :
@@ -2238,5 +2242,4 @@ CoTaskMem_String(ptr) {
 	s := StrGet(ptr), DllCall('ole32\CoTaskMemFree', 'ptr', ptr)
 	return s
 }
-#Include ..\ComVar.ahk
-#Include ..\Promise.ahk
+

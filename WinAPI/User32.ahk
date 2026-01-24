@@ -233,7 +233,44 @@ GetMessage(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax) => DllCall('User32\GetMess
 GetMessageExtraInfo() => DllCall('User32\GetMessageExtraInfo', 'uptr')
 GetMessagePos() => DllCall('User32\GetMessagePos', 'uint')
 GetMessageTime() => DllCall('User32\GetMessageTime', 'int')
+/**
+ * Retrieves information about a display monitor.
+ * @param hMonitor Handle to the display monitor of interest.
+ * @param lpmi Pointer to a MONITORINFO or MONITORINFOEX structure that receives information about the specified display monitor.
+ * @returns {Integer} If the function succeeds, the return value is nonzero.
+ */
 GetMonitorInfo(hMonitor, lpmi) => DllCall('User32\GetMonitorInfo', 'ptr', hMonitor, 'ptr', lpmi, 'int')
+
+/**
+ * Retrieves information about a display monitor, returning parsed data.
+ * @param hMonitor Handle to the display monitor of interest.
+ * @returns {Object|Boolean} An object with monitor info or false on failure.
+ */
+GetMonitorInfoParsed(hMonitor) {
+    ; MONITORINFOEX size: 40 + 2*A_PtrSize (for szDevice)
+    mi := Buffer(40 + 2 * A_PtrSize)
+    NumPut('uint', mi.Size, mi, 0) ; cbSize
+    if DllCall('User32\GetMonitorInfo', 'ptr', hMonitor, 'ptr', mi.Ptr, 'int') {
+        return {
+            cbSize: NumGet(mi, 0, 'uint'),
+            rcMonitor: {
+                left: NumGet(mi, 4, 'int'),
+                top: NumGet(mi, 8, 'int'),
+                right: NumGet(mi, 12, 'int'),
+                bottom: NumGet(mi, 16, 'int')
+            },
+            rcWork: {
+                left: NumGet(mi, 20, 'int'),
+                top: NumGet(mi, 24, 'int'),
+                right: NumGet(mi, 28, 'int'),
+                bottom: NumGet(mi, 32, 'int')
+            },
+            dwFlags: NumGet(mi, 36, 'uint'),
+            szDevice: StrGet(mi.Ptr + 40, 32)
+        }
+    }
+    return false
+}
 GetMouseMovePointsEx(cbSize, lppt, lpptBuf, nBufPoints, resolution) => DllCall('User32\GetMouseMovePointsEx', 'uint', cbSize, 'ptr', lppt, 'ptr', lpptBuf, 'int', nBufPoints, 'uint', resolution, 'int')
 GetNextDlgGroupItem(hDlg, hCtl, bPrevious) => DllCall('User32\GetNextDlgGroupItem', 'ptr', hDlg, 'ptr', hCtl, 'int', bPrevious, 'ptr')
 GetNextDlgTabItem(hDlg, hCtl, bPrevious) => DllCall('User32\GetNextDlgTabItem', 'ptr', hDlg, 'ptr', hCtl, 'int', bPrevious, 'ptr')
@@ -348,9 +385,54 @@ MessageBox(hWnd, lpText, lpCaption, uType) => DllCall('User32\MessageBox', 'ptr'
 MessageBoxEx(hWnd, lpText, lpCaption, uType, wLanguageId) => DllCall('User32\MessageBoxEx', 'ptr', hWnd, 'str', lpText, 'str', lpCaption, 'uint', uType, 'ushort', wLanguageId, 'int')
 MessageBoxIndirect(lpMsgBoxParams) => DllCall('User32\MessageBoxIndirect', 'ptr', lpMsgBoxParams, 'int')
 ModifyMenu(hMnu, uPosition, uFlags, uIDNewItem, lpNewItem) => DllCall('User32\ModifyMenu', 'ptr', hMnu, 'uint', uPosition, 'uint', uFlags, 'uptr', uIDNewItem, 'str', lpNewItem, 'int')
+/**
+ * Retrieves the handle to the display monitor that contains the specified point.
+ * @param pt The point to check, as a POINT structure (uint64).
+ * @param dwFlags Determines the function's return value if the point is not contained within any display monitor.
+ * @returns {Ptr} Handle to the display monitor.
+ */
 MonitorFromPoint(pt, dwFlags) => DllCall('User32\MonitorFromPoint', 'uint64', pt, 'uint', dwFlags, 'ptr')
+
+/**
+ * Retrieves the handle to the display monitor that contains the specified point.
+ * @param x The x-coordinate of the point.
+ * @param y The y-coordinate of the point.
+ * @param dwFlags Determines the function's return value if the point is not contained within any display monitor.
+ * @returns {Ptr} Handle to the display monitor.
+ */
+MonitorFromPointXY(x, y, dwFlags := 0) => DllCall('User32\MonitorFromPoint', 'int64', (y << 32) | x, 'uint', dwFlags, 'ptr')
+
+/**
+ * Retrieves the handle to the display monitor that has the largest intersection with the specified rectangle.
+ * @param lprc A pointer to a RECT structure that specifies the rectangle of interest.
+ * @param dwFlags Determines the function's return value if the rectangle does not intersect any display monitor.
+ * @returns {Ptr} Handle to the display monitor.
+ */
 MonitorFromRect(lprc, dwFlags) => DllCall('User32\MonitorFromRect', 'ptr', lprc, 'uint', dwFlags, 'ptr')
+
+/**
+ * Retrieves the handle to the display monitor that contains the largest portion of the specified window.
+ * @param hwnd A handle to the window.
+ * @param dwFlags Determines the function's return value if the window does not intersect any display monitor.
+ * @returns {Ptr} Handle to the display monitor.
+ */
+/**
+ * Retrieves the handle to the display monitor that contains the largest portion of the specified window.
+ * @param hwnd A handle to the window.
+ * @param dwFlags Determines the function's return value if the window does not intersect any display monitor.
+ * @returns {Ptr} Handle to the display monitor.
+ */
 MonitorFromWindow(hwnd, dwFlags) => DllCall('User32\MonitorFromWindow', 'ptr', hwnd, 'uint', dwFlags, 'ptr')
+
+/**
+ * Queries the dots per inch (dpi) of a display.
+ * @param hMonitor Handle of the monitor being queried.
+ * @param dpiType The type of DPI being queried.
+ * @param dpiX The horizontal DPI value.
+ * @param dpiY The vertical DPI value.
+ * @returns {Integer} If the function succeeds, the return value is nonzero.
+ */
+GetDpiForMonitor(hMonitor, dpiType, &dpiX, &dpiY) => DllCall('Shcore\GetDpiForMonitor', 'ptr', hMonitor, 'int', dpiType, 'uint*', dpiX, 'uint*', dpiY, 'int')
 MoveWindow(hWnd, X, Y, nWidth, nHeight, bRepaint) => DllCall('User32\MoveWindow', 'ptr', hWnd, 'int', X, 'int', Y, 'int', nWidth, 'int', nHeight, 'int', bRepaint, 'int')
 MsgWaitForMultipleObjects(nCount, pHandles, bWaitAll, dwMilliseconds, dwWakeMask) => DllCall('User32\MsgWaitForMultipleObjects', 'uint', nCount, 'ptr', pHandles, 'int', bWaitAll, 'uint', dwMilliseconds, 'uint', dwWakeMask, 'uint')
 MsgWaitForMultipleObjectsEx(nCount, pHandles, dwMilliseconds, dwWakeMask, dwFlags) => DllCall('User32\MsgWaitForMultipleObjectsEx', 'uint', nCount, 'ptr', pHandles, 'uint', dwMilliseconds, 'uint', dwWakeMask, 'uint', dwFlags, 'uint')
